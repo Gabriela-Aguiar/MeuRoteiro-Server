@@ -6,7 +6,10 @@ const citySchema = new Schema({
   image: {
     type: String,
     default:'https://res.cloudinary.com/deyy3glzl/image/upload/v1587652134/perfil-avalia_uekcwz.png'
-  }
+  },
+  itinerate: [{ 
+    type: Schema.Types.ObjectId, 
+    ref: "Itinerate" }],
 },
   {
     timestamps: true
