@@ -4,7 +4,7 @@ const passport = require('passport')
 const City     = require('../models/City')
 const Itinerate     = require('../models/Itinerate')
 const uploader = require('../configs/cloudinary')
-
+const axios = require("axios")
 
 //get cities
 script.get("/cities", (req,res) => {
@@ -89,6 +89,44 @@ script.get("/cities/:id/itinerate/:itinerateId", (req, res, next) => {
     });
 });
 
+
+
+// script.get( '/city', ( req, res ) => {
+ 
+//   let restaurants = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+toronto+canada&key=${process.env.GooglePlacesKey}`
+  
+//   axios.get(restaurants)
+//       .then( resp => {
+//           console.log(resp.data)
+//           res.json(resp.data)
+//           } )
+         
+     
+//       .catch( error => res.status(500).json(error) ) 
+
+// } )
+
+script.get( '/city', ( req, res ) => {
+  
+ 
+  axios.all([
+    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=museum+sao_paulo+brasil&key=${process.env.GooglePlacesKey}`),
+    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+sao_paulo+brasil&key=${process.env.GooglePlacesKey}`),
+    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=night_club+sao_paulo+brasil&key=${process.env.GooglePlacesKey}`),
+    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=tourist_attraction+sao_paulo+brasil&key=${process.env.GooglePlacesKey}`)
+   ])
+      .then( axios.spread((museumRes, restaurantRes, enterRes, touristRes) => {
+        
+        museumUnits = museumRes.data
+        restaurantUnits = restaurantRes.data
+        enterUnits = enterRes.data
+        touristUnits = touristRes.data
+        res.json({museumUnits, restaurantUnits, enterUnits, touristUnits})
+        console.log(museumUnits)
+        // use/access the results
+      }))
+      .catch( error => res.status(500).json(error) )
+} )
 
 
 
