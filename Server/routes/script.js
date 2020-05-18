@@ -114,7 +114,20 @@ script.get( '/city', ( req, res ) => {
 script.post("/city", (req, res) => {
   let backArray = []
   let backMap = req.body.scriptState.map(place => place.map(subPlace => backArray.push(subPlace)))
-  console.log(backArray, "vai")
+  console.log(req, "olha o req")
+
+  
+  Itinerate
+    .create({
+      name: backArray[0].name,
+      rating: backArray[0].rating,
+      formatted_address: backArray[0].formatted_address,
+      photos: backArray[0].photos,
+    })
+    .then(response => {
+      user.findByIdAndUpdate(req.body.user)
+    })
+
 } )
 
 
