@@ -2,14 +2,11 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const itinerateSchema = new Schema({
-  name:String,
-  category: {
-    type: String,
-    enum: ['restaurante', 'museu', 'entretenimento', 'ponto turístico']
-  },
+  name: String,
+  types: [],
   rating: Number,
-  address: String,
-  image: {
+  formatted_address: String,
+  photos: {
     type: String,
     default:'https://res.cloudinary.com/deyy3glzl/image/upload/v1587652134/perfil-avalia_uekcwz.png'
   },
@@ -19,9 +16,10 @@ const itinerateSchema = new Schema({
   //   },
   //   coordinates: [Number]
   // },
-  city: {
+  city: String,
+  user: {
     type: Schema.Types.ObjectId,
-    ref: 'City'
+    ref: "User"
   }
 },
   {

@@ -7,15 +7,15 @@ const uploader = require('../configs/cloudinary')
 const axios = require("axios")
 
 //get cities
-script.get("/cities", (req,res) => {
-  axios.get(restaurants)
+// script.get("/cities", (req,res) => {
+//   axios.get(restaurants)
 //   .then( resp => {
 //       console.log(resp.data)
 //       res.json(resp.data)
 //       } )
 //   .catch( error => res.status(500).json(error) ) 
 //   })
-})
+// })
 
 
 // get cities details
@@ -38,48 +38,26 @@ script.get("/cities", (req,res) => {
 //   })
 
 
-// script.get("/test", (req,res) => {
-//   let restaurants = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=+toronto+canada&key=${process.env.GooglePlacesKey}`
-
-//   axios.get(restaurants)
-//   .then( resp => {
-//       console.log(resp.data)
-//       res.json(resp.data)
-//       } )
-//   .catch( error => res.status(500).json(error) ) 
-//   })
 
 //create itinerate
-script.post("/itinerate", (req,res) => {
-  Itinerate.create({ 
-    name: req.body.name,
-    category: req.body.category,
-    rating: req.body.rating,
-    address: req.body.address,
-    image: req.body.image,
-    city: req.body.cityID
-    })
-      .then((response) => {
-        City.findByIdAndUpdate(
-          req.body.cityID,
-          {
-            $push: { itinerate: response._id },
-          },
-          { new: true }
-        )
-          .populate("itinerate")
-          .then((theResponse) => {
-            res.json(theResponse);
-          })
-          .catch((err) => {
-            console.log('erro')
-            res.status(500).json(err);
-          });
-      })
-      .catch((err) => {
-        console.log('erro2')
-        res.status(500).json(err);
-      });
+script.get("/profile/:id", (req,res) => {
+
+  // Itinerate.create({ 
+  //   name: req.body.name,
+  //   category: req.body.category,
+  //   rating: req.body.rating,
+  //   address: req.body.address,
+  //   image: req.body.image,
+  //   city: req.body.cityID
+  //   })
+      // .then((response) => {
+        
+      //   res.json(response.data)
+      // })
+      // .catch((err) => {
+      //   console.log('erro2')
+      //   res.status(500).json(err);
+      // });
 });
 
 
@@ -96,25 +74,9 @@ script.get("/cities/:id/itinerate/:itinerateId", (req, res, next) => {
 });
 
 
-
-// script.get( '/city', ( req, res ) => {
- 
-//   let restaurants = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+toronto+canada&key=${process.env.GooglePlacesKey}`
-  
-//   axios.get(restaurants)
-//       .then( resp => {
-//           console.log(resp.data)
-//           res.json(resp.data)
-//           } )
-         
-     
-//       .catch( error => res.status(500).json(error) ) 
-
-// } )
-
 script.get( '/city', ( req, res ) => {
   const cityCountry = req.headers.referer.split('=')[1]
-  // console.log(req.headers.referer.split('=')[1])
+  
    axios.all([
     axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=museum+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`),
     axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`),
@@ -128,7 +90,7 @@ script.get( '/city', ( req, res ) => {
     axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=park+${cityCountry}&key=${process.env.GooglePlacesKey}`),
     axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=library+${cityCountry}&key=${process.env.GooglePlacesKey}`),
    ])
-
+    
       .then( axios.spread((museumRes, restaurantRes, enterRes, touristRes, aquariumRes, bakeryRes, cafeRes, zooRes, movieTheaterRes, parkRes, libraryRes) => {
         
         museumUnits = museumRes.data
@@ -144,11 +106,16 @@ script.get( '/city', ( req, res ) => {
         libraryUnits = libraryRes.data
         res.json({museumUnits, restaurantUnits, enterUnits, touristUnits, aquariumUnits, bakeryUnits, cafeUnits, zooUnits, movie_theaterUnits, parkUnits, libraryUnits})
         // use/access the results
+       
       }))
       .catch( error => res.status(500).json(error) )
 } )
 
-
+script.post("/city", (req, res) => {
+  let backArray = []
+  let backMap = req.body.scriptState.map(place => place.map(subPlace => backArray.push(subPlace)))
+  console.log(backArray, "vai")
+} )
 
 
 module.exports = script;
