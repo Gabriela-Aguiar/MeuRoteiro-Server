@@ -52,7 +52,7 @@ app.use(session({
   secret:"some secret goes here",
   resave: true,
   saveUninitialized: true,
-  cookie: { maxAge: 600000 },
+  cookie: { maxAge: 900000 },
   store: new MongoStore({
     mongooseConnection: mongoose.connection,
     ttl: 24 * 60 * 60, // 1 day
