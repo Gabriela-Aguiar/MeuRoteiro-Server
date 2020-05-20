@@ -1,79 +1,14 @@
 const express  = require('express');
 const script    = express.Router();
-const passport = require('passport')
 const City     = require('../models/City')
 const Itinerate     = require('../models/Itinerate')
 const uploader = require('../configs/cloudinary')
 const axios = require("axios")
-
-//get cities
-// script.get("/cities", (req,res) => {
-//   axios.get(restaurants)
-//   .then( resp => {
-//       console.log(resp.data)
-//       res.json(resp.data)
-//       } )
-//   .catch( error => res.status(500).json(error) ) 
-//   })
-// })
+const User = require ('../models/User')
+const mongoose = require ('mongoose')
 
 
-// get cities details
-// script.get("/cities/:id", (req,res) => {
-//   City.findById(req.params.id)
-//   .then(response => res.status(200).json(response))
-//   .catch(err => res.json(err))
-// })
-
-// script.get("/cities/:id", (req,res) => {
-//   const city = req.body.value
-
-//   let places = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=+${city}&key=${process.env.GooglePlacesKey}`
-
-//   axios.get(places)
-//   .then( resp => {
-//       res.json(resp.data)
-//       })
-//   .catch( error => res.status(500).json(error) ) 
-//   })
-
-
-
-//create itinerate
-script.get("/profile/:id", (req,res) => {
-
-  // Itinerate.create({ 
-  //   name: req.body.name,
-  //   category: req.body.category,
-  //   rating: req.body.rating,
-  //   address: req.body.address,
-  //   image: req.body.image,
-  //   city: req.body.cityID
-  //   })
-      // .then((response) => {
-        
-      //   res.json(response.data)
-      // })
-      // .catch((err) => {
-      //   console.log('erro2')
-      //   res.status(500).json(err);
-      // });
-});
-
-
-//Get itinerate
-script.get("/cities/:id/itinerate/:itinerateId", (req, res, next) => {
-  Itinerate.findById(req.params.itinerateId)
-    .populate("city")
-    .then((theCity) => {
-      res.json(theCity);
-    })
-    .catch((err) => {
-      res.status(500).json(err);
-    });
-});
-
-
+//Get cities api
 script.get( '/city', ( req, res ) => {
   const cityCountry = req.headers.referer.split('=')[1]
   
@@ -92,7 +27,6 @@ script.get( '/city', ( req, res ) => {
    ])
     
       .then( axios.spread((museumRes, restaurantRes, enterRes, touristRes, aquariumRes, bakeryRes, cafeRes, zooRes, movieTheaterRes, parkRes, libraryRes) => {
-        
         museumUnits = museumRes.data
         restaurantUnits = restaurantRes.data
         enterUnits = enterRes.data
@@ -111,24 +45,96 @@ script.get( '/city', ( req, res ) => {
       .catch( error => res.status(500).json(error) )
 } )
 
+
+//create itinerate
 script.post("/city", (req, res) => {
   let backArray = []
-  let backMap = req.body.scriptState.map(place => place.map(subPlace => backArray.push(subPlace)))
-  console.log(req, "olha o req")
+  let backMap = req.body.scriptState.map(place => place.map(subPlace => {
 
-  
+  const cityName = subPlace.plus_code.compound_code.split(',')[0]
+  const cityRealName = cityName.split(' ').splice(1).join(' ')
   Itinerate
     .create({
-      name: backArray[0].name,
-      rating: backArray[0].rating,
-      formatted_address: backArray[0].formatted_address,
-      photos: backArray[0].photos,
+      name: subPlace.name,
+      rating: subPlace.rating,
+      formatted_address: subPlace.formatted_address,
+      city: cityRealName,
+      user: req.body.user._id
     })
+
     .then(response => {
-      user.findByIdAndUpdate(req.body.user)
+      console.log(response)
+      User.findByIdAndUpdate(req.body.user, {$push: { user: req.body.user._id },}, { new: true })
+        // .populate("itinerate")
+        .then((theResponse) => {
+          console.log('sucesso')
+          res.json(theResponse);
+        })
+        .catch((err) => {
+          res.status(500).json(err);
+        });
+    })
+    .catch((err) => {
+      res.status(500).json(err);
+    });
     })
 
-} )
 
+  )})
+  
+
+    
+
+    // get itinerate
+    script.get("/itinerate", (req, res) => {
+      Itinerate.find()
+        .sort({ user: -1 })
+        .then((projects) => res.json(projects))
+        .catch((error) => res.status(500).json(error));
+    });
+
+
+    //edit itinerate
+    script.put("/profile/:id", (req, res, next) => {
+      // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      //   res.status(400).json({ message: "Specified id is not valid" });
+      //   return;
+      // } 
+      Itinerate.findByIdAndUpdate(req.params.id, { $set: req.body })
+        .then(() => {
+          res.json({
+            message: `Task with ${req.params.id} is updated successfully.`,
+          });
+        })
+        .catch((err) => {
+          res.json(err);
+        });
+    });
+
+
+
+    // script.post("/itinerate", (req, res) => {
+    //   // const getId = req.body.newItinerate.map(elem => elem._id)
+    //   // if (!mongoose.Types.ObjectId.isValid(getId)) {
+    //   //   res.status(400).json({ message: "Specified id is not valid" });
+    //   //   console.log(req.body.scriptState._id, 'entrou na rota mas nao no id')
+    //   //   return;
+    //   // }
+    //   // console.log(req.body.scriptState._id, "olha o req")
+    //   // console.log(req.body, 'sucesso')
+    //   // console.log(getId, 'getid')
+    
+    //   Itinerate.findByIdAndDelete(req.body.newItinerate._id)
+    //     .then(() => {
+    //       res.json({
+    //         message: `Project is removed successfully.`,
+    //       });
+    //     })
+    //     .catch((err) => {
+    //       console.log('nao deu')
+    //       res.status(500).json(err);
+    //     });
+    // });
+    
 
 module.exports = script;
