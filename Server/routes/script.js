@@ -48,9 +48,11 @@ script.get( '/city', ( req, res ) => {
 
 //create itinerate
 script.post("/city", (req, res) => {
-  let backArray = []
-  let backMap = req.body.scriptState.map(place => place.map(subPlace => {
 
+  // console.log(req.body.scriptState.map(e => e), 'reqbody')
+  let backArray = []
+  let backMap = req.body.scriptState.map(subPlace => {
+    
   const cityName = subPlace.plus_code.compound_code.split(',')[0]
   const cityRealName = cityName.split(' ').splice(1).join(' ')
   Itinerate
@@ -80,7 +82,7 @@ script.post("/city", (req, res) => {
     })
 
 
-  )})
+  })
   
 
     
