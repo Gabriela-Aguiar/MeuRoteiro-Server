@@ -20,7 +20,8 @@ const itinerateSchema = new Schema({
   user: {
     type: Schema.Types.ObjectId,
     ref: "User"
-  }
+  },
+  notes: String
 },
   {
     timestamps: true
