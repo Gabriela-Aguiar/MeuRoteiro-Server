@@ -1,134 +1,213 @@
-const express  = require('express');
-const script    = express.Router();
-const passport = require('passport')
-const City     = require('../models/City')
-const Itinerate     = require('../models/Itinerate')
-const uploader = require('../configs/cloudinary')
-const axios = require("axios")
+const express = require("express");
+const script = express.Router();
+const City = require("../models/City");
+const Itinerate = require("../models/Itinerate");
+const uploader = require("../configs/cloudinary");
+const axios = require("axios");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
-//get cities
-// script.get("/cities", (req,res) => {
-//   axios.get(restaurants)
-//   .then( resp => {
-//       console.log(resp.data)
-//       res.json(resp.data)
-//       } )
-//   .catch( error => res.status(500).json(error) ) 
-//   })
-// })
+//Get cities api
+script.get("/city", (req, res) => {
+  const cityCountry = req.headers.referer.split("=")[1];
 
+  axios
+    .all([
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=museum+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=night_club+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=tourist_attraction+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=aquarium+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=bakery+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=cafe+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=zoo+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=movie_theater+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=park+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+      axios.get(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=library+${cityCountry}&key=${process.env.GooglePlacesKey}`
+      ),
+    ])
 
-// get cities details
-// script.get("/cities/:id", (req,res) => {
-//   City.findById(req.params.id)
-//   .then(response => res.status(200).json(response))
-//   .catch(err => res.json(err))
-// })
-
-// script.get("/cities/:id", (req,res) => {
-//   const city = req.body.value
-
-//   let places = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=+${city}&key=${process.env.GooglePlacesKey}`
-
-//   axios.get(places)
-//   .then( resp => {
-//       res.json(resp.data)
-//       })
-//   .catch( error => res.status(500).json(error) ) 
-//   })
-
-
+    .then(
+      axios.spread(
+        (
+          museumRes,
+          restaurantRes,
+          enterRes,
+          touristRes,
+          aquariumRes,
+          bakeryRes,
+          cafeRes,
+          zooRes,
+          movieTheaterRes,
+          parkRes,
+          libraryRes
+        ) => {
+          museumUnits = museumRes.data;
+          restaurantUnits = restaurantRes.data;
+          enterUnits = enterRes.data;
+          touristUnits = touristRes.data;
+          aquariumUnits = aquariumRes.data;
+          bakeryUnits = bakeryRes.data;
+          cafeUnits = cafeRes.data;
+          zooUnits = zooRes.data;
+          movie_theaterUnits = movieTheaterRes.data;
+          parkUnits = parkRes.data;
+          libraryUnits = libraryRes.data;
+          res.json({
+            museumUnits,
+            restaurantUnits,
+            enterUnits,
+            touristUnits,
+            aquariumUnits,
+            bakeryUnits,
+            cafeUnits,
+            zooUnits,
+            movie_theaterUnits,
+            parkUnits,
+            libraryUnits,
+          });
+          // use/access the results
+        }
+      )
+    )
+    .catch((error) => res.status(500).json(error));
+});
 
 //create itinerate
-script.get("/profile/:id", (req,res) => {
+script.post("/city", (req, res) => {
+  console.log(
+    req.body.scriptState.map((e) => e),
+    "reqbody"
+  );
+  let backArray = [];
+  let backMap = req.body.scriptState.map((subPlace) => {
+    const cityName = subPlace.plus_code.compound_code.split(",")[0];
+    const cityRealName = cityName.split(" ").splice(1).join(" ");
+    Itinerate.create({
+      name: subPlace.name,
+      rating: subPlace.rating,
+      formatted_address: subPlace.formatted_address,
+      city: cityRealName,
+      user: req.body.user._id,
+    })
 
-  // Itinerate.create({ 
-  //   name: req.body.name,
-  //   category: req.body.category,
-  //   rating: req.body.rating,
-  //   address: req.body.address,
-  //   image: req.body.image,
-  //   city: req.body.cityID
-  //   })
-      // .then((response) => {
-        
-      //   res.json(response.data)
-      // })
-      // .catch((err) => {
-      //   console.log('erro2')
-      //   res.status(500).json(err);
-      // });
+      .then((response) => {
+        console.log(response);
+        User.findByIdAndUpdate(
+          req.body.user,
+          { $push: { user: req.body.user._id } },
+          { new: true }
+        )
+          // .populate("itinerate")
+          .then((theResponse) => {
+            console.log("sucesso");
+            res.json(theResponse);
+          })
+          .catch((err) => {
+            res.status(500).json(err);
+          });
+      })
+      .catch((err) => {
+        res.status(500).json(err);
+      });
+  });
+});
+
+// get itinerate
+script.get("/itinerate", (req, res) => {
+
+  Itinerate.find()
+    .sort({ user: -1 })
+    .then((itinerate) => {
+      res.json(itinerate)
+      })
+    .catch((error) => res.status(500).json(error));
 });
 
 
-//Get itinerate
-script.get("/cities/:id/itinerate/:itinerateId", (req, res, next) => {
-  Itinerate.findById(req.params.itinerateId)
-    .populate("city")
-    .then((theCity) => {
-      res.json(theCity);
+// script.get("/itinerate", (req, res, next) => {
+//   Itinerate.find()
+//     .sort({ user: -1 })
+//     .then((itinerate) => {
+//       console.log(itinerate, "itinerate");
+//       res.json(itinerate);
+//       const getCity = itinerate.map((elem) => elem.city);
+//       const query = [
+//         { $match: { city: getCity } },
+//         { $group: { _id: "$city" } },
+//       ];
+//       Itinerate.aggregate(query)
+//         .then((it) => {
+//           console.log(it, "it");
+//           res.json(
+//             it.map((el) => {
+//               console.log(it, "el"), { city: el.city };
+//             })
+//           );
+//         })
+//         .catch((err) => next(err));
+//     })
+//     .catch((error) => res.status(500).json(error));
+// });
+
+
+
+// edit itinerate
+script.put("/itinerate", (req, res) => {
+  const getId = req.body.id
+  const { name, city, rating, address } = req.body;
+  const reqBody = { name, city, rating, formatted_address: address };
+
+  console.log(getId, "req body");
+  Itinerate.findByIdAndUpdate(getId, reqBody)
+    .then(() => {
+      console.log("atualizou"),
+        res.json({
+          message: `Project is updated successfully.`,
+        });
     })
     .catch((err) => {
+      console.log("não atualizaou");
       res.status(500).json(err);
     });
 });
 
-
-script.get( '/city', ( req, res ) => {
-  const cityCountry = req.headers.referer.split('=')[1]
-  
-   axios.all([
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=museum+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=night_club+rating=5+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=tourist_attraction+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=aquarium+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=bakery+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=cafe+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=zoo+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=movie_theater+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=park+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-    axios.get(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=library+${cityCountry}&key=${process.env.GooglePlacesKey}`),
-   ])
-    
-      .then( axios.spread((museumRes, restaurantRes, enterRes, touristRes, aquariumRes, bakeryRes, cafeRes, zooRes, movieTheaterRes, parkRes, libraryRes) => {
-        
-        museumUnits = museumRes.data
-        restaurantUnits = restaurantRes.data
-        enterUnits = enterRes.data
-        touristUnits = touristRes.data
-        aquariumUnits = aquariumRes.data
-        bakeryUnits = bakeryRes.data
-        cafeUnits = cafeRes.data
-        zooUnits = zooRes.data
-        movie_theaterUnits = movieTheaterRes.data
-        parkUnits = parkRes.data
-        libraryUnits = libraryRes.data
-        res.json({museumUnits, restaurantUnits, enterUnits, touristUnits, aquariumUnits, bakeryUnits, cafeUnits, zooUnits, movie_theaterUnits, parkUnits, libraryUnits})
-        // use/access the results
-       
-      }))
-      .catch( error => res.status(500).json(error) )
-} )
-
-script.post("/city", (req, res) => {
-  let backArray = []
-  let backMap = req.body.scriptState.map(place => place.map(subPlace => backArray.push(subPlace)))
-  console.log(req, "olha o req")
-
-  
-  Itinerate
-    .create({
-      name: backArray[0].name,
-      rating: backArray[0].rating,
-      formatted_address: backArray[0].formatted_address,
-      photos: backArray[0].photos,
+// delete itinerate
+script.post("/itinerate", (req, res) => {
+  // console.log(req.body, 'new itinerate')
+  const getId = req.body.newItinerate.map((elem) => elem._id);
+  console.log(getId);
+  Itinerate.findByIdAndDelete(getId)
+    .then(() => {
+      res.json({
+        message: `Project is removed successfully.`,
+      });
     })
-    .then(response => {
-      user.findByIdAndUpdate(req.body.user)
-    })
-
-} )
-
+    .catch((err) => {
+      console.log("nao deu");
+      res.status(500).json(err);
+    });
+});
 
 module.exports = script;
