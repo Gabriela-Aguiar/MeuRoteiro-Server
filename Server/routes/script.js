@@ -49,7 +49,7 @@ script.get( '/city', ( req, res ) => {
 //create itinerate
 script.post("/city", (req, res) => {
 
-  // console.log(req.body.scriptState.map(e => e), 'reqbody')
+  console.log(req.body.scriptState.map(e => e), 'reqbody')
   let backArray = []
   let backMap = req.body.scriptState.map(subPlace => {
     
@@ -83,9 +83,6 @@ script.post("/city", (req, res) => {
 
 
   })
-  
-
-    
 
     // get itinerate
     script.get("/itinerate", (req, res) => {
@@ -96,47 +93,42 @@ script.post("/city", (req, res) => {
     });
 
 
-    //edit itinerate
-    script.put("/profile/:id", (req, res, next) => {
-      // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      //   res.status(400).json({ message: "Specified id is not valid" });
-      //   return;
-      // } 
-      Itinerate.findByIdAndUpdate(req.params.id, { $set: req.body })
+    script.put("/itinerate", (req, res, next) => {
+      const getId = req.body.id[0]
+      const {name, city, rating, address} = req.body
+      const reqBody = {name, city, rating, formatted_address: address}
+
+      console.log(getId, 'req body')
+      Itinerate.findByIdAndUpdate(getId, reqBody)
         .then(() => {
+          console.log('atualizou'),
           res.json({
-            message: `Task with ${req.params.id} is updated successfully.`,
+            message: `Project is updated successfully.`,
           });
         })
         .catch((err) => {
-          res.json(err);
+          console.log('não atualizaou')
+          res.status(500).json(err);
         });
     });
 
 
-
-    // script.post("/itinerate", (req, res) => {
-    //   // const getId = req.body.newItinerate.map(elem => elem._id)
-    //   // if (!mongoose.Types.ObjectId.isValid(getId)) {
-    //   //   res.status(400).json({ message: "Specified id is not valid" });
-    //   //   console.log(req.body.scriptState._id, 'entrou na rota mas nao no id')
-    //   //   return;
-    //   // }
-    //   // console.log(req.body.scriptState._id, "olha o req")
-    //   // console.log(req.body, 'sucesso')
-    //   // console.log(getId, 'getid')
-    
-    //   Itinerate.findByIdAndDelete(req.body.newItinerate._id)
-    //     .then(() => {
-    //       res.json({
-    //         message: `Project is removed successfully.`,
-    //       });
-    //     })
-    //     .catch((err) => {
-    //       console.log('nao deu')
-    //       res.status(500).json(err);
-    //     });
-    // });
+// delete itinerate
+    script.post("/itinerate", (req, res) => {
+      // console.log(req.body, 'new itinerate')
+      const getId = req.body.newItinerate.map(elem => elem._id)
+      console.log(getId)
+      Itinerate.findByIdAndDelete(getId)
+        .then(() => {
+          res.json({
+            message: `Project is removed successfully.`,
+          });
+        })
+        .catch((err) => {
+          console.log('nao deu')
+          res.status(500).json(err);
+        });
+    });
     
 
 module.exports = script;
