@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 //Get cities api
 script.get("/city", (req, res) => {
   const cityCountry = req.headers.referer.split("=")[1];
-
+  console.log("aqui estamos")
   axios
     .all([
       axios.get(
