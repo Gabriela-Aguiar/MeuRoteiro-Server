@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 //Get cities api
 script.get("/city", (req, res) => {
   const cityCountry = req.headers.referer.split("=")[1];
-  console.log("aqui estamos")
+  // console.log("aqui estamos")
   axios
     .all([
       axios.get(
@@ -96,10 +96,10 @@ script.get("/city", (req, res) => {
 
 //create itinerate
 script.post("/city", (req, res) => {
-  console.log(
-    req.body.scriptState.map((e) => e),
-    "reqbody"
-  );
+  // console.log(
+  //   req.body.scriptState.map((e) => e),
+  //   "reqbody"
+  // );
   let backArray = [];
   let backMap = req.body.scriptState.map((subPlace) => {
     const cityName = subPlace.plus_code.compound_code.split(",")[0];
@@ -113,7 +113,7 @@ script.post("/city", (req, res) => {
     })
 
       .then((response) => {
-        console.log(response);
+        // console.log(response);
         User.findByIdAndUpdate(
           req.body.user,
           { $push: { user: req.body.user._id } },
@@ -121,7 +121,7 @@ script.post("/city", (req, res) => {
         )
           // .populate("itinerate")
           .then((theResponse) => {
-            console.log("sucesso");
+            // console.log("sucesso");
             res.json(theResponse);
           })
           .catch((err) => {
@@ -179,16 +179,16 @@ script.put("/itinerate", (req, res) => {
   const { name, city, rating, address } = req.body;
   const reqBody = { name, city, rating, formatted_address: address };
 
-  console.log(getId, "req body");
+  // console.log(getId, "req body");
   Itinerate.findByIdAndUpdate(getId, reqBody)
     .then(() => {
-      console.log("atualizou"),
+      // console.log("atualizou"),
         res.json({
           message: `Project is updated successfully.`,
         });
     })
     .catch((err) => {
-      console.log("não atualizaou");
+      // console.log("não atualizaou");
       res.status(500).json(err);
     });
 });
@@ -197,7 +197,7 @@ script.put("/itinerate", (req, res) => {
 script.post("/itinerate", (req, res) => {
   // console.log(req.body, 'new itinerate')
   const getId = req.body.newItinerate.map((elem) => elem._id);
-  console.log(getId);
+  // console.log(getId);
   Itinerate.findByIdAndDelete(getId)
     .then(() => {
       res.json({
@@ -205,7 +205,7 @@ script.post("/itinerate", (req, res) => {
       });
     })
     .catch((err) => {
-      console.log("nao deu");
+      // console.log("nao deu");
       res.status(500).json(err);
     });
 });
